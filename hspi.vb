@@ -108,6 +108,7 @@ Public Class HSPI
             wpd.plugInInstance = Instance
             callback.RegisterConfigLink(wpd)
             callback.RegisterEventCB(Enums.HSEvent.VALUE_CHANGE, IFACE_NAME, "")
+            'callback.RegisterEventCB(Enums.HSEvent.CONFIG_CHANGE, IFACE_NAME, "")
         Catch ex As Exception
 
         End Try
@@ -145,6 +146,8 @@ Public Class HSPI
         Select Case EventType
             Case Enums.HSEvent.VALUE_CHANGE
                 WebSocket.onEvent(parms(1), parms(2), parms(3), parms(4))
+            Case Enums.HSEvent.CONFIG_CHANGE
+                WebSocket.onConfig(parms(1), parms(2), parms(3), parms(4))
         End Select
     End Sub
 
