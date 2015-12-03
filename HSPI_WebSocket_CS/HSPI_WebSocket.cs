@@ -8,6 +8,7 @@ using Scheduler;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 using Newtonsoft.Json;
+using System.Security.Cryptography.X509Certificates;
 
 namespace HSPI_WebSocket_CS
 {
@@ -194,13 +195,19 @@ namespace HSPI_WebSocket_CS
             app.WriteLog(Name, "CS init");
             queryDevices();
         }
-        public void open(UInt16 port)
+        public void open(UInt16 port, bool secure, byte[] pem)
         {
-            app.WriteLog(Name, "WS Open port " + port);
+            app.WriteLog(Name, "WS Open port " + port + " secure " + secure);
             if (!Object.ReferenceEquals(ws, null)) {
-                ws.Stop();
+                if (ws.IsListening)
+                    ws.Stop();
             }
-            ws = new WebSocketServer(port);
+            ws = new WebSocketServer(port, secure);
+            if (secure)
+            {
+                X509Certificate2 cert = new X509Certificate2(pem);
+                ws.SslConfiguration.ServerCertificate = cert;
+            }
             ws.AddWebSocketService<Homeseer>("/homeseer", () => new Homeseer(this) {
                 IgnoreExtensions = true
             });

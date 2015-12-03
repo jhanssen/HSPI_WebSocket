@@ -5,6 +5,7 @@ Imports HSCF.Communication.Scs.Communication.EndPoints.Tcp
 Imports HSCF.Communication.ScsServices.Client
 Imports HSCF.Communication.ScsServices.Service
 Imports System.Reflection
+Imports System.Text
 Imports HSPI_WebSocket_CS.HSPI_WebSocket
 
 Public Class HSPI
@@ -115,7 +116,16 @@ Public Class HSPI
         WebSocket = New HSPI_WebSocket_CS.HSPI_WebSocket()
         WebSocket.init(hs)
         Dim wsport = hs.GetINISetting("WebSocket", "port", "8080", INIFILE)
-        WebSocket.open(Convert.ToUInt16(wsport))
+        Dim portSecure = hs.GetINISetting("WebSocket", "secure", "off", INIFILE)
+        Dim pem = hs.GetINISetting("WebSocket", "pem", "", INIFILE)
+        Dim isSecure = (portSecure = "on")
+        If isSecure = False Then
+            pem = ""
+        End If
+        If pem = "" Then
+            isSecure = False
+        End If
+        WebSocket.open(Convert.ToUInt16(wsport), isSecure, Encoding.ASCII.GetBytes(pem))
         Return ""
     End Function
 

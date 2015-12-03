@@ -16,11 +16,18 @@ Public Class web_config
         Dim parts As Collections.Specialized.NameValueCollection
         parts = HttpUtility.ParseQueryString(data)
 
-        Dim port As String = parts("new_port")
+        Dim secure As String = parts("secure")
+        Dim port As String = parts("port")
+        Dim pem As String = parts("pem")
         If port <> "" Then
+            If secure = "" Or pem = "" Then
+                secure = "off"
+            End If
             hs.WriteLog(IFACE_NAME, port)
             hs.SaveINISetting("WebSocket", "port", port, INIFILE)
-            WebSocket.open(Convert.ToUInt16(port))
+            hs.SaveINISetting("WebSocket", "secure", secure, INIFILE)
+            hs.SaveINISetting("WebSocket", "pem", pem, INIFILE)
+            WebSocket.open(Convert.ToUInt16(port), (secure = "on"), Encoding.ASCII.GetBytes(pem))
         End If
 
         Return MyBase.postBackProc(page, data, user, userRights)
@@ -74,11 +81,22 @@ Public Class web_config
         stb.Append(clsPageBuilder.FormStart("form", "form", "Post"))
         stb.Append("<br><br>Port:<br>")
         Dim portValue = hs.GetINISetting("WebSocket", "port", "8080", INIFILE)
-        Dim tb As New clsJQuery.jqTextBox("new_port", "text", portValue, PageName, 40, False)
+        Dim tb As New clsJQuery.jqTextBox("port", "text", portValue, PageName, 40, False)
         tb.editable = True
         stb.Append(tb.Build)
+        stb.Append("<br><br>")
+        Dim portSecure = hs.GetINISetting("WebSocket", "secure", "off", INIFILE)
+        Dim sec As New clsJQuery.jqCheckBox("secure", "Secure", PageName, False, False)
+        sec.checked = (portSecure = "on")
+        stb.Append(sec.Build)
         stb.Append("<br>")
-        Dim but As New clsJQuery.jqButton("change_port", "Change port", PageName, True)
+        Dim pemValue = hs.GetINISetting("WebSocket", "pem", "", INIFILE)
+        'fanfuckingtastic
+        Dim pem As New String("<textarea name='pem' rows='20' cols='80'>" & pemValue & "</textarea>")
+        stb.Append(pem)
+        stb.Append("<br><br>")
+
+        Dim but As New clsJQuery.jqButton("save", "Save", PageName, True)
         stb.Append(but.Build)
         stb.Append(clsPageBuilder.FormEnd)
         Return stb.ToString
