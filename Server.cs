@@ -4,18 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HomeSeerAPI;
-using Scheduler;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 using Newtonsoft.Json;
-using System.Security.Cryptography.X509Certificates;
 
-namespace HSPI_WebSocket_CS
+namespace HSPI_WebSocket2
 {
     public class Homeseer : WebSocketBehavior
     {
-        private HSPI_WebSocket ws;
-        public Homeseer(HSPI_WebSocket _ws)
+        private Server ws;
+        public Homeseer(Server _ws)
         {
             ws = _ws;
         }
@@ -28,7 +26,8 @@ namespace HSPI_WebSocket_CS
             {
                 //ws.app.WriteLog("hety", value.ToString() + " " + ctrl.ControlType + " " + ctrl.ControlValue);
                 var range = ctrl.Range;
-                if (Object.ReferenceEquals(range, null)) {
+                if (Object.ReferenceEquals(range, null))
+                {
                     if (ctrl.ControlValue == value)
                     {
                         ws.app.CAPIControlHandler(ctrl);
@@ -44,7 +43,8 @@ namespace HSPI_WebSocket_CS
         }
         protected override void OnMessage(MessageEventArgs e)
         {
-            try {
+            try
+            {
                 var obj = JsonConvert.DeserializeObject<Dictionary<string, object>>(e.Data);
                 if (!obj.ContainsKey("type"))
                     return;
@@ -53,9 +53,10 @@ namespace HSPI_WebSocket_CS
                 {
                     List<object> l = new List<object>();
                     var events = ws.app.Event_Info_All();
-                    foreach(var ev in events) {
+                    foreach (var ev in events)
+                    {
                         l.Add(new { name = ev.Event_Name, id = ev.Event_Ref, type = ev.Event_Type });
-                        //ws.app.WriteLog(HSPI_WebSocket.Name, ev.Event_Name);
+                        //ws.app.WriteLog(Server.Name, ev.Event_Name);
                     }
                     Send(JsonConvert.SerializeObject(new { type = "events", events = l }));
                 }
@@ -76,7 +77,8 @@ namespace HSPI_WebSocket_CS
                         if (value is double)
                         {
                             setDeviceValue(dref, (double)value);
-                        } else if (value is Int64)
+                        }
+                        else if (value is Int64)
                         {
                             setDeviceValue(dref, (Int64)value);
                         }
@@ -96,15 +98,21 @@ namespace HSPI_WebSocket_CS
                         if (evt is Int64)
                         {
                             ws.app.TriggerEventByRef((int)(Int64)evt);
-                        } else if (evt is double) {
+                        }
+                        else if (evt is double)
+                        {
                             ws.app.TriggerEventByRef((int)(double)evt);
-                        } else if (evt is string) {
+                        }
+                        else if (evt is string)
+                        {
                             ws.app.TriggerEvent((string)evt);
                         }
                     }
                 }
-            } catch (Exception ex) {
-                ws.app.WriteLog(HSPI_WebSocket.Name, ex.ToString());
+            }
+            catch (Exception ex)
+            {
+                ws.app.WriteLog(Server.Name, ex.ToString());
             }
         }
         protected override void OnOpen()
@@ -126,13 +134,13 @@ namespace HSPI_WebSocket_CS
         public Dictionary<double, string> values;
         public DateTime changed;
     };
-    public class HSPI_WebSocket
+    public class Server
     {
         static public String Name = "WebSocket";
         public HomeSeerAPI.IHSApplication app;
         public Dictionary<String, Device> devices;
         private WebSocketServer ws = null;
-        public HSPI_WebSocket() { }
+        public Server() { }
 
         private void sendToAll(String payload)
         {
@@ -166,7 +174,8 @@ namespace HSPI_WebSocket_CS
                                 values[pair.Value] = app.DeviceVSP_GetStatus(dref, pair.Value, ePairStatusControl.Status);
                             }
                         }
-                        devices[dev.get_Address(app)] = new Device {
+                        devices[dev.get_Address(app)] = new Device
+                        {
                             name = dev.get_Name(app),
                             value = new Device.Value
                             {
@@ -198,17 +207,19 @@ namespace HSPI_WebSocket_CS
         public void open(UInt16 port, bool secure, byte[] pem)
         {
             app.WriteLog(Name, "WS Open port " + port + " secure " + secure);
-            if (!Object.ReferenceEquals(ws, null)) {
+            if (!Object.ReferenceEquals(ws, null))
+            {
                 if (ws.IsListening)
                     ws.Stop();
             }
-            ws = new WebSocketServer(port, secure);
+            ws = new WebSocketServer(port/*, secure*/);
             if (secure)
             {
-                X509Certificate2 cert = new X509Certificate2(pem);
-                ws.SslConfiguration.ServerCertificate = cert;
+                //X509Certificate2 cert = new X509Certificate2(pem);
+                //ws.SslConfiguration.ServerCertificate = cert;
             }
-            ws.AddWebSocketService<Homeseer>("/homeseer", () => new Homeseer(this) {
+            ws.AddWebSocketService<Homeseer>("/homeseer", () => new Homeseer(this)
+            {
                 IgnoreExtensions = true
             });
             ws.Start();
@@ -219,18 +230,20 @@ namespace HSPI_WebSocket_CS
             if (type == 0)
             {
                 queryDevices();
-            } else if (type == 1) {
+            }
+            else if (type == 1)
+            {
                 List<object> l = new List<object>();
                 var events = app.Event_Info_All();
                 foreach (var ev in events)
                 {
                     l.Add(new { name = ev.Event_Name, id = ev.Event_Ref, type = ev.Event_Type });
-                    //ws.app.WriteLog(HSPI_WebSocket.Name, ev.Event_Name);
+                    //ws.app.WriteLog(Server.Name, ev.Event_Name);
                 }
                 sendToAll(JsonConvert.SerializeObject(new { type = "events", events = l }));
             }
         }
-        public void onEvent(ref String name, double value, double old, int vref)
+        public void onEvent(String name, double value, double old, int vref)
         {
             int dref = app.GetDeviceRef(name);
             Scheduler.Classes.DeviceClass dev = (Scheduler.Classes.DeviceClass)app.GetDeviceByRef(dref);
