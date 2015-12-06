@@ -73,6 +73,13 @@ namespace HSPI_WebSocket2
             return waitForPost<T>(function, null);
         }
 
+        private string getString(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length == 0)
+                return "";
+            return Encoding.UTF8.GetString(bytes);
+        }
+
         public WebSocketProxy()
         {
         }
@@ -84,14 +91,25 @@ namespace HSPI_WebSocket2
                 return waitForPost<int>("triggerCount");
             }
         }
+
+        public bool triggerConfigured(IPlugInAPI.strTrigActInfo TrigInfo)
+        {
+            return waitForPost<bool>("triggerConfigured", new List<object>() { getString(TrigInfo.DataIn) });
+        }
+
+        public string triggerName(int TriggerNumber)
+        {
+            return waitForPost<string>("triggerName", new List<object>() { TriggerNumber });
+        }
+
         public string triggerBuildUI(IPlugInAPI.strTrigActInfo TrigInfo)
         {
-            return waitForPost<string>("triggerBuildUI", new List<object>() { Encoding.UTF8.GetString(TrigInfo.DataIn) });
+            return waitForPost<string>("triggerBuildUI", new List<object>() { getString(TrigInfo.DataIn) });
         }
 
         public string triggerFormatUI(IPlugInAPI.strTrigActInfo TrigInfo)
         {
-            return waitForPost<string>("triggerFormatUI", new List<object>() { Encoding.UTF8.GetString(TrigInfo.DataIn) });
+            return waitForPost<string>("triggerFormatUI", new List<object>() { getString(TrigInfo.DataIn) });
         }
 
         public IPlugInAPI.strMultiReturn triggerProcessPostUI(NameValueCollection PostData, IPlugInAPI.strTrigActInfo TrigInfoIN)
@@ -104,7 +122,7 @@ namespace HSPI_WebSocket2
                 return ret;
             if (PostData.Count == 0)
                 return ret;
-            string data = waitForPost<string>("triggerProcessPostUI", new List<object>() { PostData, Encoding.UTF8.GetString(TrigInfoIN.DataIn) });
+            string data = waitForPost<string>("triggerProcessPostUI", new List<object>() { PostData, getString(TrigInfoIN.DataIn) });
             if (Object.ReferenceEquals(data, null)) {
                 ret.sResult = "Error getting post post ui";
             } else {

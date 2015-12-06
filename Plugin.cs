@@ -374,13 +374,13 @@ namespace HSPI_WebSocket2
         public bool get_TriggerConfigured(IPlugInAPI.strTrigActInfo TrigInfo)
         {
             //throw new NotImplementedException();
-            return true;
+            return proxy.triggerConfigured(TrigInfo);
         }
 
         public string get_TriggerName(int TriggerNumber)
         {
             //throw new NotImplementedException();
-            return "";
+            return proxy.triggerName(TriggerNumber);
         }
 
         public bool HandleAction(IPlugInAPI.strTrigActInfo ActInfo)
