@@ -10,7 +10,7 @@ namespace HSPI_WebSocket2
 {
     class HSPI : IPlugInAPI
     {
-        internal Server server = new Server();
+        internal WebSocketProxy proxy = new WebSocketProxy();
 
         // our homeseer objects
         internal HomeSeerAPI.IHSApplication hs;
@@ -163,10 +163,10 @@ namespace HSPI_WebSocket2
             switch (EventType)
             {
                 case Enums.HSEvent.VALUE_CHANGE:
-                    server.onEvent((string)parms[1], (double)parms[2], (double)parms[3], (int)parms[4]);
+                    proxy.onEvent((string)parms[1], (double)parms[2], (double)parms[3], (int)parms[4]);
                     break;
                 case Enums.HSEvent.CONFIG_CHANGE:
-                    server.onConfig((int)parms[1], (int)parms[2], (int)parms[3], (int)parms[4]);
+                    proxy.onConfig((int)parms[1], (int)parms[2], (int)parms[3], (int)parms[4]);
                     break;
             }
             //throw new NotImplementedException();
@@ -193,7 +193,7 @@ namespace HSPI_WebSocket2
             }
 
             configPage = new ConfigPage(sConfigPage, this);
-            server.init(ref hs);
+            proxy.init(ref hs);
 
             string port = hs.GetINISetting("WebSocket", "port", "8089", INI_FILE);
             string secure = hs.GetINISetting("WebSocket", "secure", "off", INI_FILE);
@@ -207,7 +207,7 @@ namespace HSPI_WebSocket2
             {
                 isSecure = false;
             }
-            server.open(Convert.ToUInt16(port), isSecure, Encoding.ASCII.GetBytes(pem));
+            proxy.open(Convert.ToUInt16(port), isSecure, Encoding.ASCII.GetBytes(pem));
 
             return "";
         }
@@ -230,7 +230,7 @@ namespace HSPI_WebSocket2
         public void ShutdownIO()
         {
             // shut everything down here
-            server.shutdown();
+            proxy.shutdown();
 
             // let our console wrapper know we are finished
             Shutdown = true;
@@ -262,7 +262,8 @@ namespace HSPI_WebSocket2
         {
             get
             {
-                return false;
+                hs.WriteLog(IFACE_NAME, "HasTriggers");
+                return proxy.triggerCount > 0;
             }
         }
 
@@ -270,7 +271,8 @@ namespace HSPI_WebSocket2
         {
             get
             {
-                return 0;
+                hs.WriteLog(IFACE_NAME, "TriggerCount");
+                return proxy.triggerCount;
             }
         }
 
@@ -330,7 +332,7 @@ namespace HSPI_WebSocket2
         public string TriggerBuildUI(string sUnique, IPlugInAPI.strTrigActInfo TrigInfo)
         {
             //throw new NotImplementedException();
-            return "";
+            return proxy.triggerBuildUI(TrigInfo);
         }
 
         public string TriggerFormatUI(IPlugInAPI.strTrigActInfo TrigInfo)

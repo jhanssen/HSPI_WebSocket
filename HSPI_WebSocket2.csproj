@@ -76,6 +76,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server.cs" />
+    <Compile Include="WebSocketProxy.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

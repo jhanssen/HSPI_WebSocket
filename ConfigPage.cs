@@ -120,7 +120,7 @@ namespace HSPI_WebSocket2
                 else
                     pem = plugin.hs.GetINISetting("WebSocket", "pem", "", plugin.INI_FILE);
 
-                plugin.server.open(Convert.ToUInt16(port), (secure == "on"), Encoding.ASCII.GetBytes(pem));
+                plugin.proxy.open(Convert.ToUInt16(port), (secure == "on"), Encoding.ASCII.GetBytes(pem));
             }
             catch (Exception ex)
             {

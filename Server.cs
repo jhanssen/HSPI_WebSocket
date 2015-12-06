@@ -49,6 +49,21 @@ namespace HSPI_WebSocket2
                 if (!obj.ContainsKey("type"))
                     return;
                 String type = obj["type"].ToString();
+                if (obj.ContainsKey("id"))
+                {
+                    // find it in callbacks
+                    UInt64 id = Convert.ToUInt64(obj["id"]);
+                    Console.WriteLine("checking id " + id);
+                    if (ws.procs.ContainsKey(id))
+                    {
+                        Console.WriteLine("found cb, calling");
+                        var proc = ws.procs[id];
+                        ws.procs.Remove(id);
+
+                        proc(obj);
+                    }
+                }
+                Console.WriteLine(type);
                 if (type == "events")
                 {
                     List<object> l = new List<object>();
@@ -136,9 +151,12 @@ namespace HSPI_WebSocket2
     };
     public class Server
     {
+        public delegate void Proc(Dictionary<String, object> obj);
+
         static public String Name = "WebSocket";
         public HomeSeerAPI.IHSApplication app;
         public Dictionary<String, Device> devices;
+        internal Dictionary<UInt64, Proc> procs = new Dictionary<UInt64, Proc>();
         private WebSocketServer ws = null;
         public Server() { }
 
@@ -150,6 +168,20 @@ namespace HSPI_WebSocket2
             {
                 host.Sessions.Broadcast(payload);
             }
+        }
+        public void sendToAll(UInt64 id, Proc proc, object payload)
+        {
+            procs[id] = proc;
+            sendToAll(JsonConvert.SerializeObject(new { id = id, data = payload }));
+        }
+        public bool hasConnections()
+        {
+            foreach (var host in ws.WebSocketServices.Hosts)
+            {
+                if (host.Sessions.Count > 0)
+                    return true;
+            }
+            return false;
         }
         private void queryDevices()
         {
