@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using HomeSeerAPI;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace HSPI_WebSocket2
 {
@@ -41,6 +44,7 @@ namespace HSPI_WebSocket2
                 }
             }
         }
+
         protected override void OnMessage(MessageEventArgs e)
         {
             try
@@ -48,20 +52,26 @@ namespace HSPI_WebSocket2
                 var obj = JsonConvert.DeserializeObject<Dictionary<string, object>>(e.Data);
                 if (!obj.ContainsKey("type"))
                     return;
+                if (!obj.ContainsKey("id"))
+                    return;
                 String type = obj["type"].ToString();
-                if (obj.ContainsKey("id"))
+                UInt64 id = Convert.ToUInt64(obj["id"]);
+                // find it in callbacks
+                Console.WriteLine("checking id " + id);
+                if (type == "response" && obj.ContainsKey("data") && ws.procs.ContainsKey(id))
                 {
-                    // find it in callbacks
-                    UInt64 id = Convert.ToUInt64(obj["id"]);
-                    Console.WriteLine("checking id " + id);
-                    if (ws.procs.ContainsKey(id))
-                    {
-                        Console.WriteLine("found cb, calling");
-                        var proc = ws.procs[id];
-                        ws.procs.Remove(id);
+                    Console.WriteLine("found cb, calling");
+                    var proc = ws.procs[id];
+                    ws.procs.Remove(id);
 
-                        proc(obj);
+                    if (obj["data"] is JObject)
+                    {
+                        var data = (JObject)obj["data"];
+                        proc(data.ToObject<Dictionary<string, object>>());
+                        return;
                     }
+                    proc(null);
+                    return;
                 }
                 Console.WriteLine(type);
                 if (type == "events")
@@ -73,14 +83,11 @@ namespace HSPI_WebSocket2
                         l.Add(new { name = ev.Event_Name, id = ev.Event_Ref, type = ev.Event_Type });
                         //ws.app.WriteLog(Server.Name, ev.Event_Name);
                     }
-                    Send(JsonConvert.SerializeObject(new { type = "events", events = l }));
+                    Send(JsonConvert.SerializeObject(new { id = id, type = "events", events = l }));
                 }
                 else if (type == "devices")
                 {
-                    Dictionary<String, object> ret = new Dictionary<string, object>();
-                    ret["type"] = "devices";
-                    ret["devices"] = ws.devices;
-                    Send(JsonConvert.SerializeObject(ret));
+                    Send(JsonConvert.SerializeObject( new { id = id, type = "devices", devices = ws.devices }));
                 }
                 else if (type == "set")
                 {
@@ -172,7 +179,7 @@ namespace HSPI_WebSocket2
         public void sendToAll(UInt64 id, Proc proc, object payload)
         {
             procs[id] = proc;
-            sendToAll(JsonConvert.SerializeObject(new { id = id, data = payload }));
+            sendToAll(JsonConvert.SerializeObject(new { id = id, type = "request", data = payload }));
         }
         public bool hasConnections()
         {

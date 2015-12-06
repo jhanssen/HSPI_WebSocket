@@ -338,13 +338,13 @@ namespace HSPI_WebSocket2
         public string TriggerFormatUI(IPlugInAPI.strTrigActInfo TrigInfo)
         {
             //throw new NotImplementedException();
-            return "";
+            return proxy.triggerFormatUI(TrigInfo);
         }
 
         public IPlugInAPI.strMultiReturn TriggerProcessPostUI(NameValueCollection PostData, IPlugInAPI.strTrigActInfo TrigInfoIN)
         {
             //throw new NotImplementedException();
-            return new IPlugInAPI.strMultiReturn();
+            return proxy.triggerProcessPostUI(PostData, TrigInfoIN);
         }
 
         public bool TriggerReferencesDevice(IPlugInAPI.strTrigActInfo TrigInfo, int dvRef)
