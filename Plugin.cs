@@ -332,7 +332,7 @@ namespace HSPI_WebSocket2
         public string TriggerBuildUI(string sUnique, IPlugInAPI.strTrigActInfo TrigInfo)
         {
             //throw new NotImplementedException();
-            return proxy.triggerBuildUI(TrigInfo);
+            return proxy.triggerBuildUI(sUnique, TrigInfo);
         }
 
         public string TriggerFormatUI(IPlugInAPI.strTrigActInfo TrigInfo)

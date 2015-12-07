@@ -67,7 +67,7 @@ namespace HSPI_WebSocket2
                     if (obj["data"] is JObject)
                     {
                         var data = (JObject)obj["data"];
-                        proc(data.ToObject<Dictionary<string, object>>());
+                        proc(data.ToObject<Dictionary<string, JToken>>());
                         return;
                     }
                     proc(null);
@@ -158,7 +158,7 @@ namespace HSPI_WebSocket2
     };
     public class Server
     {
-        public delegate void Proc(Dictionary<String, object> obj);
+        public delegate void Proc(Dictionary<String, JToken> obj);
 
         static public String Name = "WebSocket";
         public HomeSeerAPI.IHSApplication app;
