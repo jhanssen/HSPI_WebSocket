@@ -21,9 +21,9 @@ namespace HSPI_WebSocket2
         private string sConfigPage = "WebSocket2_Config";
 
         // our plugin identity
-        internal string IFACE_NAME = "WebSocket2";
-        internal string INSTANCE_NAME = "";
-        internal string INI_FILE = "WebSocket2.ini";
+        static internal string IFACE_NAME = "WebSocket2";
+        static internal string INSTANCE_NAME = "";
+        static internal string INI_FILE = "WebSocket2.ini";
 
         // our plugin status
         internal bool Shutdown = false;
@@ -32,6 +32,17 @@ namespace HSPI_WebSocket2
         {
             // cant do much here because this class gets loaded and then destroyed by Homeseer during initial discovery & reflection.
             // instead wait to be initialised during the Connect and InitIO methods, called by our console wrapper and homeseer respectively
+        }
+
+        internal static List<Scheduler.Classes.DeviceClass> devices(HomeSeerAPI.IHSApplication app)
+        {
+            var devs = new List<Scheduler.Classes.DeviceClass>();
+            var de = (Scheduler.Classes.clsDeviceEnumeration)app.GetDeviceEnumerator();
+            while (!de.Finished)
+            {
+                devs.Add(de.GetNext());
+            }
+            return devs;
         }
 
         #region Non plugin methods - Connection to Homeseer
@@ -225,6 +236,7 @@ namespace HSPI_WebSocket2
         public void SetIOMulti(List<CAPI.CAPIControl> colSend)
         {
             // homeseer will inform us when the one of our devices has changed.  Push that change through to the field.
+            proxy.setIOMulti(colSend);
         }
 
         public void ShutdownIO()

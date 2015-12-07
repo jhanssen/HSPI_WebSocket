@@ -77,9 +77,9 @@ namespace HSPI_WebSocket2
         {
             var hs = plugin.hs;
             var stb = new StringBuilder();
-            var portValue = hs.GetINISetting("WebSocket", "port", "8089", plugin.INI_FILE);
-            var portSecure = hs.GetINISetting("WebSocket", "secure", "off", plugin.INI_FILE);
-            var pemValue = hs.GetINISetting("WebSocket", "pem", "", plugin.INI_FILE);
+            var portValue = hs.GetINISetting("WebSocket", "port", "8089", HSPI.INI_FILE);
+            var portSecure = hs.GetINISetting("WebSocket", "secure", "off", HSPI.INI_FILE);
+            var pemValue = hs.GetINISetting("WebSocket", "pem", "", HSPI.INI_FILE);
             stb.Append(FormStart("form", "form", "Post"));
             stb.Append("<br><br>Port:<br>");
             var tb = new clsJQuery.jqTextBox("port", "text", portValue, PageName, 40, false);
@@ -108,23 +108,23 @@ namespace HSPI_WebSocket2
                 pem = parts["pem"];
 
                 if (port is string)
-                    plugin.hs.SaveINISetting("WebSocket", "port", port, plugin.INI_FILE);
+                    plugin.hs.SaveINISetting("WebSocket", "port", port, HSPI.INI_FILE);
                 else
-                    port = plugin.hs.GetINISetting("WebSocket", "port", "8089", plugin.INI_FILE);
+                    port = plugin.hs.GetINISetting("WebSocket", "port", "8089", HSPI.INI_FILE);
                 if (secure is string)
-                    plugin.hs.SaveINISetting("WebSocket", "secure", secure, plugin.INI_FILE);
+                    plugin.hs.SaveINISetting("WebSocket", "secure", secure, HSPI.INI_FILE);
                 else
-                    secure = plugin.hs.GetINISetting("WebSocket", "secure", "off", plugin.INI_FILE);
+                    secure = plugin.hs.GetINISetting("WebSocket", "secure", "off", HSPI.INI_FILE);
                 if (pem is string)
-                    plugin.hs.SaveINISetting("WebSocket", "pem", pem, plugin.INI_FILE);
+                    plugin.hs.SaveINISetting("WebSocket", "pem", pem, HSPI.INI_FILE);
                 else
-                    pem = plugin.hs.GetINISetting("WebSocket", "pem", "", plugin.INI_FILE);
+                    pem = plugin.hs.GetINISetting("WebSocket", "pem", "", HSPI.INI_FILE);
 
                 plugin.proxy.open(Convert.ToUInt16(port), (secure == "on"), Encoding.ASCII.GetBytes(pem));
             }
             catch (Exception ex)
             {
-                plugin.hs.WriteLog(plugin.IFACE_NAME, "exception caught in postBackProc: " + ex.ToString());
+                plugin.hs.WriteLog(HSPI.IFACE_NAME, "exception caught in postBackProc: " + ex.ToString());
             }
 
             return base.postBackProc(page, data, user, userRights);

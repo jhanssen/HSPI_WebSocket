@@ -223,6 +223,17 @@ namespace HSPI_WebSocket2
             return ret;
         }
 
+        public void setIOMulti(List<CAPI.CAPIControl> colSend)
+        {
+            Dictionary<string, object> values = new Dictionary<string, object>();
+            foreach (var ctrl in colSend)
+            {
+                var dev = (Scheduler.Classes.DeviceClass)app.GetDeviceByRef(ctrl.Ref);
+                values[dev.get_Address(app)] = new { value = ctrl.ControlValue, text = ctrl.ControlString };
+            }
+            server.sendToAll(new { type = "setDeviceValues", data = values });
+        }
+
         public void init(ref HomeSeerAPI.IHSApplication _app)
         {
             app = _app;
