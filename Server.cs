@@ -310,7 +310,11 @@ namespace HSPI_WebSocket2
             }
         }
 
-        private List<String> addDevices(JToken obj)
+        private class Device
+        {
+            public string id;
+        };
+        private List<Device> addDevices(JToken obj)
         {
             if (!(obj.Type == JTokenType.Array))
                 return null;
@@ -319,7 +323,7 @@ namespace HSPI_WebSocket2
                         select d).ToDictionary(d => d.get_Address(ws.app), d => d);
             Console.WriteLine("about to create devices " + obj.Type);
 
-            List<String> complete = new List<String>();
+            List<Device> complete = new List<Device>();
             
             foreach (var jnewdev in obj)
             {
@@ -348,7 +352,7 @@ namespace HSPI_WebSocket2
                             var id = deviceId(addr, code);
                             if (devs.ContainsKey(id))
                             {
-                                complete.Add(devs[id].get_Address(ws.app));                                 
+                                complete.Add(new Device() { id = devs[id].get_Address(ws.app) });
                             } else
                             {
                                 // we don't have this device, create it
@@ -391,7 +395,7 @@ namespace HSPI_WebSocket2
                                     }
                                 }
 
-                                complete.Add(created.get_Address(ws.app));
+                                complete.Add(new Device() { id = created.get_Address(ws.app) });
                             }
                         } else
                         {
@@ -410,6 +414,36 @@ namespace HSPI_WebSocket2
             return complete;
         }
 
+        private void updateDeviceValue(JObject obj)
+        {
+            JToken jid, jval;
+            if (obj.TryGetValue("id", out jid) && obj.TryGetValue("value", out jval))
+            {
+                if (jid.Type == JTokenType.String && (jval.Type == JTokenType.Float || jval.Type == JTokenType.Integer))
+                {
+                    double val = jval.Value<double>();
+                    string addr = jid.ToString();
+
+                    ws.app.SetDeviceValueByRef(ws.app.GetDeviceRef(addr), val, true);
+                }
+            }
+        }
+
+        private void updateDeviceText(JObject obj)
+        {
+            JToken jid, jval;
+            if (obj.TryGetValue("id", out jid) && obj.TryGetValue("text", out jval))
+            {
+                if (jid.Type == JTokenType.String && jval.Type == JTokenType.String)
+                {
+                    string txt = jval.ToString();
+                    string addr = jid.ToString();
+
+                    ws.app.SetDeviceString(ws.app.GetDeviceRef(addr), txt, false);
+                }
+            }
+        }
+
         protected override void OnMessage(MessageEventArgs e)
         {
             try
@@ -417,9 +451,20 @@ namespace HSPI_WebSocket2
                 var obj = JsonConvert.DeserializeObject<Dictionary<string, object>>(e.Data);
                 if (!obj.ContainsKey("type"))
                     return;
-                if (!obj.ContainsKey("id"))
-                    return;
                 String type = obj["type"].ToString();
+                if (!obj.ContainsKey("id")) {
+                    if (obj.ContainsKey("data") && obj["data"] is JObject)
+                    {
+                        if (type == "deviceValueSet")
+                        {
+                            updateDeviceValue((JObject)obj["data"]);
+                        } else if (type == "deviceTextSet")
+                        {
+                            updateDeviceText((JObject)obj["data"]);
+                        }
+                    }
+                    return;
+                }
                 UInt64 id = Convert.ToUInt64(obj["id"]);
                 // find it in callbacks
                 Console.WriteLine("checking id " + id);
