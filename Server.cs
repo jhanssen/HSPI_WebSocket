@@ -486,25 +486,24 @@ namespace HSPI_WebSocket2
                 Console.WriteLine(type);
                 if (type == "events")
                 {
-                    //List<object> l = new List<object>();
-                    Dictionary<int, List<object>> dict = new Dictionary<int, List<object>>();
+                    Dictionary<int, List<object>> flat = new Dictionary<int, List<object>>();
                     var groups = ws.app.Event_Group_Info_All();
                     foreach (var gr in groups)
                     {
-                        dict[gr.GroupID] = new List<object>();
+                        flat[gr.GroupID] = new List<object>();
                     }
                     var events = ws.app.Event_Info_All();
                     foreach (var ev in events)
                     {
-                        dict[ev.GroupID].Add(new { name = ev.Event_Name, id = ev.Event_Ref, type = ev.Event_Type });
+                        flat[ev.GroupID].Add(new { name = ev.Event_Name, id = ev.Event_Ref, type = ev.Event_Type });
                         //ws.app.WriteLog(Server.Name, ev.Event_Name);
                     }
-                    Dictionary<String, List<object>> named = new Dictionary<string, List<object>>();
+                    List<object> grouped = new List<object>();
                     foreach (var gr in groups)
                     {
-                        named[gr.GroupName] = dict[gr.GroupID];
+                        grouped.Add(new { goupName = gr.GroupName, groupId = gr.GroupID, events = flat[gr.GroupID] });
                     }
-                    Send(JsonConvert.SerializeObject(new { id = id, type = "events", events = named }));
+                    Send(JsonConvert.SerializeObject(new { id = id, type = "events", events = grouped }));
                 }
                 else if (type == "devices")
                 {
