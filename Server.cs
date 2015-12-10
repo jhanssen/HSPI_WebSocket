@@ -595,7 +595,7 @@ namespace HSPI_WebSocket2
             List<object> grouped = new List<object>();
             foreach (var gr in groups)
             {
-                grouped.Add(new { goupName = gr.GroupName, groupId = gr.GroupID, events = flat[gr.GroupID] });
+                grouped.Add(new { groupName = gr.GroupName, groupId = gr.GroupID, events = flat[gr.GroupID] });
             }
             return grouped;
         }
