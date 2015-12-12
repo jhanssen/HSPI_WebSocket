@@ -15,7 +15,7 @@ namespace HSPI_WebSocket2
     {
         static int timeout = 1000;
         private HomeSeerAPI.IHSApplication app;
-        private Server server = new Server();
+        private WebSocketServer server = new WebSocketServer();
         private UInt64 cref = 0;
         class Command
         {
@@ -25,7 +25,7 @@ namespace HSPI_WebSocket2
         private List<Command> commands = new List<Command>();
         private Dictionary<UInt64, String> received = new Dictionary<UInt64, string>();
 
-        private void postCommand(String function, List<object> arguments, Server.Proc proc)
+        private void postCommand(String function, List<object> arguments, WebSocketServer.Proc proc)
         {
             server.sendToAll(++cref, proc, new
             {
