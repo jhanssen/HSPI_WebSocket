@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
+using System.Collections.Generic;
 
 namespace HSPI_WebSocket2
 {
@@ -11,6 +14,25 @@ namespace HSPI_WebSocket2
 
         static void Main(string[] args)
         {
+            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
+            {
+                AppDomainSetup appSetup = new AppDomainSetup()
+                {
+                    ApplicationName = "WebSocketDomain",
+                    ApplicationBase = AppDomain.CurrentDomain.BaseDirectory,
+                    PrivateBinPath = @"bin/WebSocket",
+                    ConfigurationFile = AppDomain.CurrentDomain.SetupInformation.ConfigurationFile
+                };
+                var currentAssembly = Assembly.GetExecutingAssembly();
+                var otherDomain = AppDomain.CreateDomain("WebSocketDomain", null, appSetup);
+                var ret = otherDomain.ExecuteAssemblyByName(
+                                            currentAssembly.FullName,
+                                            //currentAssembly.Evidence,
+                                            args);
+                Environment.ExitCode = ret;
+                return;
+            }
+
             // create an instance of our plugin.
             HSPI myPlugin = new HSPI();
 
