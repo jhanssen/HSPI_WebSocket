@@ -9,6 +9,29 @@ using HomeSeerAPI;
 
 namespace HSPI_WebSocket2
 {
+    public enum Use
+    {
+        On = 0,
+        Off = 1,
+        Dim = 2,
+        OnAlternate = 3,
+        Play = 4,
+        Pause = 5,
+        Stop = 6,
+        Forward = 7,
+        Rewind = 8,
+        Repeat = 9,
+        Shuffle = 10,
+        HeatSetPoint = 11,
+        CoolSetPoint = 12,
+        ThermModeOff = 13,
+        ThermModeHeat = 14,
+        ThermModeCool = 15,
+        ThermModeAuto = 16,
+        DoorLock = 17,
+        DoorUnLock = 18,
+        NotSpecified = 255
+    };
     class WebSocketAPI
     {
         public delegate void Response(UInt64 id, Dictionary<string, JToken> obj);
@@ -87,6 +110,7 @@ namespace HSPI_WebSocket2
                 }
                 else if (type == "set")
                 {
+                    bool sent = false;
                     if (obj.ContainsKey("address") && obj.ContainsKey("value"))
                     {
                         String addr = obj["address"].ToString();
@@ -94,37 +118,70 @@ namespace HSPI_WebSocket2
                         object value = obj["value"];
                         if (value is double)
                         {
-                            setDeviceValue(dref, (double)value);
+                            if (setDeviceValue(dref, (double)value))
+                            {
+                                sent = true;
+                                request(JsonConvert.SerializeObject(new { id = id, ok = true }));
+                            }
                         }
                         else if (value is Int64)
                         {
-                            setDeviceValue(dref, (Int64)value);
+                            if (setDeviceValue(dref, (Int64)value))
+                            {
+                                sent = true;
+                                request(JsonConvert.SerializeObject(new { id = id, ok = true }));
+                            }
                         }
                         else if (value is string)
                         {
                             var ctrl = app.CAPIGetSingleControl(dref, true, (string)value, false, true);
                             if (!Object.ReferenceEquals(ctrl, null))
+                            {
                                 app.CAPIControlHandler(ctrl);
+                                sent = true;
+                                request(JsonConvert.SerializeObject(new { id = id, ok = true }));
+                            }
                         }
+                    }
+                    if (!sent)
+                    {
+                        request(JsonConvert.SerializeObject(new { id = id, ok = false }));
                     }
                 }
                 else if (type == "fire")
                 {
+                    bool sent = false;
                     if (obj.ContainsKey("event"))
                     {
                         object evt = obj["event"];
                         if (evt is Int64)
                         {
-                            app.TriggerEventByRef((int)(Int64)evt);
+                            if (app.TriggerEventByRef((int)(Int64)evt))
+                            {
+                                sent = true;
+                                request(JsonConvert.SerializeObject(new { id = id, ok = true }));
+                            }
                         }
                         else if (evt is double)
                         {
-                            app.TriggerEventByRef((int)(double)evt);
+                            if (app.TriggerEventByRef((int)(double)evt))
+                            {
+                                sent = true;
+                                request(JsonConvert.SerializeObject(new { id = id, ok = true }));
+                            }
                         }
                         else if (evt is string)
                         {
-                            app.TriggerEvent((string)evt);
+                            if (app.TriggerEvent((string)evt) == 1)
+                            {
+                                sent = true;
+                                request(JsonConvert.SerializeObject(new { id = id, ok = true }));
+                            }
                         }
+                    }
+                    if (!sent)
+                    {
+                        request(JsonConvert.SerializeObject(new { id = id, ok = false }));
                     }
                 }
             }
@@ -272,11 +329,11 @@ namespace HSPI_WebSocket2
             }
         }
 
-        private static void setDeviceValue(int dref, double value)
+        private static bool setDeviceValue(int dref, double value)
         {
             CAPI.CAPIControl[] ctrls = app.CAPIGetControl(dref);
             if (Object.ReferenceEquals(ctrls, null))
-                return;
+                return false;
             foreach (var ctrl in ctrls)
             {
                 //app.WriteLog("hety", value.ToString() + " " + ctrl.ControlType + " " + ctrl.ControlValue);
@@ -286,15 +343,16 @@ namespace HSPI_WebSocket2
                     if (ctrl.ControlValue == value)
                     {
                         app.CAPIControlHandler(ctrl);
-                        return;
+                        return true;
                     }
                 }
                 else if (value >= range.RangeStart && value <= range.RangeEnd)
                 {
                     app.CAPIControlHandler(ctrl);
-                    return;
+                    return true;
                 }
             }
+            return false;
         }
 
         private static string deviceId(string addr, string code)
@@ -307,28 +365,96 @@ namespace HSPI_WebSocket2
             Status = 0x1,
             Control = 0x2
         };
-        private enum Use
+        public static ePairControlUse fromAPIUse(Use use)
         {
-            On = 0,
-            Off = 1,
-            Dim = 2,
-            OnAlternate = 3,
-            Play = 4,
-            Pause = 5,
-            Stop = 6,
-            Forward = 7,
-            Rewind = 8,
-            Repeat = 9,
-            Shuffle = 10,
-            HeatSetPoint = 11,
-            CoolSetPoint = 12,
-            ThermModeOff = 13,
-            ThermModeHeat = 14,
-            ThermModeCool = 15,
-            ThermModeAuto = 16,
-            DoorLock = 17,
-            DoorUnLock = 18
-        };
+            switch (use)
+            {
+                case Use.Dim:
+                    return ePairControlUse._Dim;
+                case Use.Off:
+                    return ePairControlUse._Off;
+                case Use.On:
+                    return ePairControlUse._On;
+                case Use.OnAlternate:
+                    return ePairControlUse._On_Alternate;
+                case Use.Play:
+                    return ePairControlUse._Play;
+                case Use.Pause:
+                    return ePairControlUse._Pause;
+                case Use.Repeat:
+                    return ePairControlUse._Repeat;
+                case Use.Shuffle:
+                    return ePairControlUse._Shuffle;
+                case Use.Rewind:
+                    return ePairControlUse._Rewind;
+                case Use.Forward:
+                    return ePairControlUse._Forward;
+                case Use.Stop:
+                    return ePairControlUse._Stop;
+                case Use.ThermModeAuto:
+                    return ePairControlUse._ThermModeAuto;
+                case Use.ThermModeCool:
+                    return ePairControlUse._ThermModeCool;
+                case Use.ThermModeHeat:
+                    return ePairControlUse._ThermModeHeat;
+                case Use.ThermModeOff:
+                    return ePairControlUse._ThermModeOff;
+                case Use.CoolSetPoint:
+                    return ePairControlUse._CoolSetPoint;
+                case Use.HeatSetPoint:
+                    return ePairControlUse._HeatSetPoint;
+                case Use.DoorLock:
+                    return ePairControlUse._DoorLock;
+                case Use.DoorUnLock:
+                    return ePairControlUse._DoorUnLock;
+            }
+            return ePairControlUse.Not_Specified;
+        }
+        public static Use toAPIUse(ePairControlUse use)
+        {
+            switch (use)
+            {
+                case ePairControlUse._Dim:
+                    return Use.Dim;
+                case ePairControlUse._Off:
+                    return Use.Off;
+                case ePairControlUse._On:
+                    return Use.On;
+                case ePairControlUse._On_Alternate:
+                    return Use.OnAlternate;
+                case ePairControlUse._Play:
+                    return Use.Play;
+                case ePairControlUse._Pause:
+                    return Use.Pause;
+                case ePairControlUse._Repeat:
+                    return Use.Repeat;
+                case ePairControlUse._Shuffle:
+                    return Use.Shuffle;
+                case ePairControlUse._Rewind:
+                    return Use.Rewind;
+                case ePairControlUse._Forward:
+                    return Use.Forward;
+                case ePairControlUse._Stop:
+                    return Use.Stop;
+                case ePairControlUse._ThermModeAuto:
+                    return Use.ThermModeAuto;
+                case ePairControlUse._ThermModeCool:
+                    return Use.ThermModeCool;
+                case ePairControlUse._ThermModeHeat:
+                    return Use.ThermModeHeat;
+                case ePairControlUse._ThermModeOff:
+                    return Use.ThermModeOff;
+                case ePairControlUse._CoolSetPoint:
+                    return Use.CoolSetPoint;
+                case ePairControlUse._HeatSetPoint:
+                    return Use.HeatSetPoint;
+                case ePairControlUse._DoorLock:
+                    return Use.DoorLock;
+                case ePairControlUse._DoorUnLock:
+                    return Use.DoorUnLock;
+            }
+            return Use.NotSpecified;
+        }
         private enum Render
         {
             Values = 0,
@@ -409,66 +535,7 @@ namespace HSPI_WebSocket2
                 {
                     Console.WriteLine("fa 5");
                     var use = (Use)Enum.ToObject(typeof(Use), juse.Value<Int64>());
-                    switch (use)
-                    {
-                        case Use.Dim:
-                            pair.ControlUse = ePairControlUse._Dim;
-                            break;
-                        case Use.Off:
-                            pair.ControlUse = ePairControlUse._Off;
-                            break;
-                        case Use.On:
-                            pair.ControlUse = ePairControlUse._On;
-                            break;
-                        case Use.OnAlternate:
-                            pair.ControlUse = ePairControlUse._On_Alternate;
-                            break;
-                        case Use.Play:
-                            pair.ControlUse = ePairControlUse._Play;
-                            break;
-                        case Use.Pause:
-                            pair.ControlUse = ePairControlUse._Pause;
-                            break;
-                        case Use.Repeat:
-                            pair.ControlUse = ePairControlUse._Repeat;
-                            break;
-                        case Use.Shuffle:
-                            pair.ControlUse = ePairControlUse._Shuffle;
-                            break;
-                        case Use.Rewind:
-                            pair.ControlUse = ePairControlUse._Rewind;
-                            break;
-                        case Use.Forward:
-                            pair.ControlUse = ePairControlUse._Forward;
-                            break;
-                        case Use.Stop:
-                            pair.ControlUse = ePairControlUse._Stop;
-                            break;
-                        case Use.ThermModeAuto:
-                            pair.ControlUse = ePairControlUse._ThermModeAuto;
-                            break;
-                        case Use.ThermModeCool:
-                            pair.ControlUse = ePairControlUse._ThermModeCool;
-                            break;
-                        case Use.ThermModeHeat:
-                            pair.ControlUse = ePairControlUse._ThermModeHeat;
-                            break;
-                        case Use.ThermModeOff:
-                            pair.ControlUse = ePairControlUse._ThermModeOff;
-                            break;
-                        case Use.CoolSetPoint:
-                            pair.ControlUse = ePairControlUse._CoolSetPoint;
-                            break;
-                        case Use.HeatSetPoint:
-                            pair.ControlUse = ePairControlUse._HeatSetPoint;
-                            break;
-                        case Use.DoorLock:
-                            pair.ControlUse = ePairControlUse._DoorLock;
-                            break;
-                        case Use.DoorUnLock:
-                            pair.ControlUse = ePairControlUse._DoorUnLock;
-                            break;
-                    }
+                    pair.ControlUse = fromAPIUse(use);
                 }
                 else
                 {

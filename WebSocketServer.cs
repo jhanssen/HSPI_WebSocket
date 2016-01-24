@@ -46,6 +46,7 @@ namespace HSPI_WebSocket2
         public Value value;
         public Dictionary<double, string> values;
         public DateTime changed;
+        public List<Use> uses;
     };
     public class WebSocketServer
     {
@@ -132,6 +133,7 @@ namespace HSPI_WebSocket2
                     dev = en.GetNext();
                     if (!Object.ReferenceEquals(dev, null))
                     {
+                        List<Use> uses = new List<Use>();
                         Dictionary<double, string> values = new Dictionary<double, string>();
                         dev.get_Code(app);
                         int dref = dev.get_Ref(app);
@@ -141,6 +143,7 @@ namespace HSPI_WebSocket2
                             foreach (var pair in pairs)
                             {
                                 values[pair.Value] = app.DeviceVSP_GetStatus(dref, pair.Value, ePairStatusControl.Status);
+                                uses.Add(WebSocketAPI.toAPIUse(pair.ControlUse));
                             }
                         }
                         devices[dev.get_Address(app)] = new Device
@@ -155,7 +158,8 @@ namespace HSPI_WebSocket2
                             location = dev.get_Location(app),
                             location2 = dev.get_Location2(app),
                             userNote = dev.get_UserNote(app),
-                            changed = dev.get_Last_Change(app)
+                            changed = dev.get_Last_Change(app),
+                            uses = uses
                         };
                         //app.WriteLog(Name, dev.get_Address(app) + " " + dev.get_Name(app));
                     }
