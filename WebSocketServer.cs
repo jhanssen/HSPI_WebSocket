@@ -145,10 +145,18 @@ namespace HSPI_WebSocket2
                             foreach (var pair in pairs)
                             {
                                 values[pair.Value] = app.DeviceVSP_GetStatus(dref, pair.Value, ePairStatusControl.Status);
-                                uses.Add(WebSocketAPI.toAPIUse(pair.ControlUse));
+                                //uses.Add(WebSocketAPI.toAPIUse(pair.ControlUse));
                             }
                         }
-                        List<string> assoc = new List<string>();
+                        CAPI.CAPIControl[] ctrls = app.CAPIGetControl(dref);
+                        if (!Object.ReferenceEquals(ctrls, null))
+                        {
+                            foreach (var ctrl in ctrls)
+                            {
+                                uses.Add(WebSocketAPI.toAPIUse(ctrl.ControlUse));
+                            }
+                        }
+                            List<string> assoc = new List<string>();
                         int hsrelscount = dev.get_AssociatedDevices_Count(app);
                         if (hsrelscount > 0)
                         {

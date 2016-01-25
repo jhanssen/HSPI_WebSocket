@@ -123,21 +123,42 @@ namespace HSPI_WebSocket2
                         String addr = obj["address"].ToString();
                         int dref = app.GetDeviceRef(addr);
                         object value = obj["value"];
+
+                        Func<int, double, Dictionary<string, object>, bool> setValue = (r, v, o) =>
+                        {
+                            if (o.ContainsKey("use"))
+                            {
+                                ePairControlUse use = WebSocketAPI.fromAPIUse((Use)Convert.ToUInt64(o["use"]));
+                                app.WriteLog(WebSocketServer.Name, "Use: " + Convert.ToString((Int64)use));
+                                var ctrl = app.CAPIGetSingleControlByUse(r, use);
+                                if (!Object.ReferenceEquals(ctrl, null))
+                                {
+                                    ctrl.ControlValue = v;
+                                    app.CAPIControlHandler(ctrl);
+                                    request(JsonConvert.SerializeObject(new { id = id, ok = true }));
+                                    return true;
+                                }
+                            }
+                            else
+                            {
+                                if (setDeviceValue(r, v))
+                                {
+                                    request(JsonConvert.SerializeObject(new { id = id, ok = true }));
+                                    return true;
+                                }
+                            }
+                            return false;
+                        };
+
                         if (value is double)
                         {
-                            if (setDeviceValue(dref, (double)value))
-                            {
+                            if (setValue(dref, (double)value, obj))
                                 sent = true;
-                                request(JsonConvert.SerializeObject(new { id = id, ok = true }));
-                            }
                         }
                         else if (value is Int64)
                         {
-                            if (setDeviceValue(dref, (Int64)value))
-                            {
+                            if (setValue(dref, (Int64)value, obj))
                                 sent = true;
-                                request(JsonConvert.SerializeObject(new { id = id, ok = true }));
-                            }
                         }
                         else if (value is string)
                         {
