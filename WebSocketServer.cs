@@ -47,6 +47,8 @@ namespace HSPI_WebSocket2
         public Dictionary<double, string> values;
         public DateTime changed;
         public List<Use> uses;
+        public Relationship relationship;
+        public List<string> associations;
     };
     public class WebSocketServer
     {
@@ -146,6 +148,17 @@ namespace HSPI_WebSocket2
                                 uses.Add(WebSocketAPI.toAPIUse(pair.ControlUse));
                             }
                         }
+                        List<string> assoc = new List<string>();
+                        int hsrelscount = dev.get_AssociatedDevices_Count(app);
+                        if (hsrelscount > 0)
+                        {
+                            int[] hsrels = dev.get_AssociatedDevices(app);
+                            for (int i = 0; i < hsrelscount; ++i)
+                            {
+                                Scheduler.Classes.DeviceClass child = (Scheduler.Classes.DeviceClass)app.GetDeviceByRef(hsrels[i]);
+                                assoc.Add(child.get_Address(app));
+                            }
+                        }
                         devices[dev.get_Address(app)] = new Device
                         {
                             name = dev.get_Name(app),
@@ -159,7 +172,9 @@ namespace HSPI_WebSocket2
                             location2 = dev.get_Location2(app),
                             userNote = dev.get_UserNote(app),
                             changed = dev.get_Last_Change(app),
-                            uses = uses
+                            uses = uses,
+                            relationship = WebSocketAPI.toAPIRelationship(dev.get_Relationship(app)),
+                            associations = assoc
                         };
                         //app.WriteLog(Name, dev.get_Address(app) + " " + dev.get_Name(app));
                     }

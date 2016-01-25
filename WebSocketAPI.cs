@@ -9,6 +9,13 @@ using HomeSeerAPI;
 
 namespace HSPI_WebSocket2
 {
+    public enum Relationship
+    {
+        Parent = 0,
+        Child = 1,
+        Standalone = 2,
+        NotSet = 3
+    };
     public enum Use
     {
         On = 0,
@@ -365,6 +372,19 @@ namespace HSPI_WebSocket2
             Status = 0x1,
             Control = 0x2
         };
+        public static Relationship toAPIRelationship(Enums.eRelationship rel)
+        {
+            switch (rel)
+            {
+                case Enums.eRelationship.Parent_Root:
+                    return Relationship.Parent;
+                case Enums.eRelationship.Child:
+                    return Relationship.Child;
+                case Enums.eRelationship.Standalone:
+                    return Relationship.Standalone;
+            }
+            return Relationship.NotSet;
+        }
         public static ePairControlUse fromAPIUse(Use use)
         {
             switch (use)
