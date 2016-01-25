@@ -156,7 +156,7 @@ namespace HSPI_WebSocket2
                                 uses.Add(WebSocketAPI.toAPIUse(ctrl.ControlUse));
                             }
                         }
-                            List<string> assoc = new List<string>();
+                        List<string> assoc = new List<string>();
                         int hsrelscount = dev.get_AssociatedDevices_Count(app);
                         if (hsrelscount > 0)
                         {
