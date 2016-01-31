@@ -543,7 +543,7 @@ namespace HSPI_WebSocket2
 
         private static void addDeviceStatus(int dref, JObject status)
         {
-            JToken jvalue, jtext, jcontrol, juse, jrender, jincludevalues;
+            JToken jvalue, jtext, jcontrol, juse, jrender, jincludevalues, jlocation;
             if (status.TryGetValue("value", out jvalue) && status.TryGetValue("control", out jcontrol))
             {
                 if (jcontrol.Type != JTokenType.Integer)
@@ -671,6 +671,20 @@ namespace HSPI_WebSocket2
                 else
                 {
                     pair.IncludeValues = true;
+                }
+                if (status.TryGetValue("location", out jlocation))
+                {
+                    if (jlocation.Type == JTokenType.Object)
+                    {
+                        var locobj = (JObject)jlocation;
+                        JToken jrow, jcol, jspan;
+                        if (locobj.TryGetValue("row", out jrow))
+                            pair.Render_Location.Row = jrow.Value<int?>() ?? 0;
+                        if (locobj.TryGetValue("column", out jcol))
+                            pair.Render_Location.Column = jcol.Value<int?>() ?? 0;
+                        if (locobj.TryGetValue("span", out jspan))
+                            pair.Render_Location.ColumnSpan = jspan.Value<int?>() ?? 0;
+                    }
                 }
 
                 app.DeviceVSP_AddPair(dref, pair);
