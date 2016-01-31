@@ -239,7 +239,7 @@ namespace HSPI_WebSocket2
                 Console.WriteLine("processing device");
                 if (jnewdev is JObject)
                 {
-                    JToken jname, jloc, jloc2, jtype, jpairs, jaddress, jcode;
+                    JToken jname, jloc, jloc2, jtype, jpairs, jaddress, jcode, jdim;
                     var newdev = (JObject)jnewdev;
                     if (newdev.TryGetValue("name", out jname) && newdev.TryGetValue("type", out jtype)
                         && newdev.TryGetValue("location", out jloc) && newdev.TryGetValue("location2", out jloc2)
@@ -256,8 +256,13 @@ namespace HSPI_WebSocket2
                             var loc2 = jloc2.ToString();
                             var addr = "websocket-" + jaddress.ToString();
                             var code = "";
+                            bool canDim = false;
                             if (newdev.TryGetValue("code", out jcode))
                                 code = jcode.ToString();
+                            if (newdev.TryGetValue("canDim", out jdim))
+                            {
+                                canDim = jdim.Value<bool?>() ?? false;
+                            }
                             var id = deviceId(addr, code);
                             if (devs.ContainsKey(id))
                             {
@@ -275,6 +280,7 @@ namespace HSPI_WebSocket2
                                 created.set_Location(app, loc);
                                 created.set_Location2(app, loc2);
                                 created.set_Address(app, addr);
+                                created.set_Can_Dim(app, canDim);
                                 if (code.Length > 0)
                                     created.set_Code(app, code);
                                 created.set_Status_Support(app, false);
