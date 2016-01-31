@@ -275,7 +275,8 @@ namespace HSPI_WebSocket2
                                 created.set_Location(app, loc);
                                 created.set_Location2(app, loc2);
                                 created.set_Address(app, addr);
-                                created.set_Code(app, code);
+                                if (code.Length > 0)
+                                    created.set_Code(app, code);
                                 created.set_Status_Support(app, false);
                                 created.MISC_Set(app, Enums.dvMISC.SHOW_VALUES);
                                 created.MISC_Set(app, Enums.dvMISC.NO_LOG);
@@ -295,10 +296,30 @@ namespace HSPI_WebSocket2
                                         if (item.TryGetValue("status", out jstatus) && item.TryGetValue("graphic", out jgraphic))
                                         {
                                             Console.WriteLine("processing pair 2");
-                                            if (jstatus is JObject && jgraphic is JObject)
+                                            if (jstatus.Type == JTokenType.Array)
                                             {
-                                                Console.WriteLine("processing pair 3");
+                                                var jsarray = (JArray)jstatus;
+                                                for (var jsi = 0; jsi < jsarray.Count(); ++jsi)
+                                                {
+                                                    addDeviceStatus(dref, (JObject)jsarray[jsi]);
+                                                }
+                                            }
+                                            else if (jstatus.Type == JTokenType.Object)
+                                            {
+                                                Console.WriteLine("processing pair 3.1");
                                                 addDeviceStatus(dref, (JObject)jstatus);
+                                            }
+                                            if (jgraphic.Type == JTokenType.Array)
+                                            {
+                                                var jgarray = (JArray)jgraphic;
+                                                for (var jgi = 0; jgi < jgarray.Count(); ++jgi)
+                                                {
+                                                    addDeviceGraphic(dref, (JObject)jgarray[jgi]);
+                                                }
+                                            }
+                                            else if (jgraphic.Type == JTokenType.Object)
+                                            {
+                                                Console.WriteLine("processing pair 3.2");
                                                 addDeviceGraphic(dref, (JObject)jgraphic);
                                             }
                                         }
@@ -385,6 +406,8 @@ namespace HSPI_WebSocket2
 
         private static string deviceId(string addr, string code)
         {
+            if (code.Length == 0)
+                return addr;
             return addr + "-" + code;
         }
 
@@ -553,10 +576,11 @@ namespace HSPI_WebSocket2
                     {
                         if (jtext.Type == JTokenType.Object)
                         {
+                            var textobj = (JObject)jtext;
                             JToken jprefix, jsuffix;
-                            if (status.TryGetValue("prefix", out jprefix))
+                            if (textobj.TryGetValue("prefix", out jprefix))
                                 pair.RangeStatusPrefix = jprefix.ToString();
-                            if (status.TryGetValue("suffix", out jsuffix))
+                            if (textobj.TryGetValue("suffix", out jsuffix))
                                 pair.RangeStatusSuffix = jsuffix.ToString();
                         }
                     }
